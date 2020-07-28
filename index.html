@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.semanticui.min.css">
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.dataTables.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/themes/prism.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/colreorder/1.5.0/css/colReorder.semanticui.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.5.2/css/buttons.semanticui.min.css">
+	<script src="./smartTagging.js"></script>
+	<style>
+
+	html {
+
+	}
+
+	body{
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+
+	*{ 
+		font-family: "Neue Helvetica", sans-serif;
+		font-weight: 200;
+		-moz-user-select: -moz-none;
+		-khtml-user-select: none;
+		-webkit-user-select: none;
+
+		/*
+		Introduced in IE 10.
+		See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+		*/
+		-ms-user-select: none;
+		user-select: none;
+	}
+
+	h1, h2, h3, h4, h5{
+		font-weight: 200;	
+	}
+
+	.main_content{
+		padding-top: 40px;
+		overflow: auto;
+		flex: 1;
+	}
+
+	/* header is draggable... */
+	header {
+		-webkit-app-region: drag;
+		height:38px;
+		background: #fefefe;
+		border-bottom: 1px solid #f0f0f0;
+		text-align: center;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		font-weight: 300;
+		justify-content: space-between;
+	}
+
+	/* but any buttons inside the header shouldn't be draggable */
+	header button {
+		-webkit-app-region: no-drag;
+	}
+
+	/* perhaps move some items out of way for the traffic light */
+	header:first-child {
+		width: 100px;
+	}
+
+	header > div{
+		padding: 14px;
+	}
+
+	header a{
+		color: #000;
+	}
+
+	.icon-lg{
+		font-size: 50px;
+		margin: 20px;
+	}
+	
+	#column_stats pre{
+		transition: all 0.1s;
+		max-height: 0px;
+		overflow-y:scroll;
+		opacity: 0;
+	}
+
+	#dev:hover > #column_stats pre{
+		max-height: 400px;
+		opacity: 1;
+	}
+
+	#header-progressbar-wrapper{
+		width: 100%;
+		left: 0;
+		top: 0;
+		position: absolute;
+	}
+
+	#inner-wrapper{
+		width: 100%;
+		height: 2px;
+		position: relative;
+	}
+
+	#progressbar{
+		background: green;
+		background: rgba(108, 241, 108,0.9);
+     	box-shadow: 0px 0px 3px 1px rgba(108, 241, 108,0.3);
+		transition: all 0.2s;
+		width: 0;
+		height: 2px;
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+
+	#drop_zone{
+		height: 80vh;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		border: 1px solid #f3f3f3;
+		border-radius: .28571429rem;
+		transition: all 0.2s;
+		margin: 0 40px;
+		background: #fff;
+		cursor: initial;
+	}
+
+	#file_stats{
+		margin-bottom: 10px;
+	}
+	
+	.file-stat > div{
+		border: 1px solid #f3f3f3;
+		border-radius: .28571429rem;
+		padding: 10px;
+		background: #fff;
+		cursor: pointer;
+		box-shadow: 0 5px 10px -10px rgba(0,0,0,0.04);
+		transition: all 0.2s;
+	}
+
+	.file-stat > div:hover{
+		box-shadow: 0 10px 20px -10px rgba(0,0,0,0.06);
+	}
+	/* popup modal styles */
+	.popup-modal-overlay {
+		height: 100%;
+		width: 100%;
+		position: fixed;
+		top: 0;
+		left: 0;
+		background: rgba(0,0,0,.6);
+		z-index: 999;
+		display: none;
+	}
+
+	.popup-modal-full {
+		background: white;
+		border-radius: 3px;
+		border: none;
+		box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+		color: #262e35;
+		margin: auto;
+		max-width: 700px;
+		overflow: hidden;
+		transition: all 0.2s;
+		width: 100%;
+	}
+
+	.popup-modal-header{
+		display: flex;
+		padding: 10px 20px;
+		background: #f5f7f9;
+	}
+
+	.popup-modal-body{
+		padding: 20px;
+	}
+
+	.popup-modal-actions{
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		width: 100%;
+	}
+
+	#popup-modal-back{
+		border: 1px solid #333;
+		background: white;
+		color: #333;
+	}
+
+	.popup-modal-actions button {
+		min-width: 80px;
+		white-space: nowrap;
+		text-shadow: none;
+		display: inline-flex;
+		font-size: 13px;
+		margin: 0;
+		cursor: pointer;
+		-webkit-appearance: none;
+		transition: box-shadow .1s linear;
+		height: 36px;
+		align-items: center;
+		box-sizing: border-box;
+		padding: 0 8px;
+		overflow: hidden;
+		border-radius: 3px;
+		background: #007cba;
+		border: 1px solid #007cba;
+		color: #fff;
+		text-decoration: none;
+		justify-content: center;
+	}
+
+	.popup-modal-elements-wide {
+		display: flex;
+		margin-left: 40px;
+		margin-right: 40px;
+		margin-top: 30px;
+		margin-bottom: 30px;
+	}
+
+	.popup-modal-element {
+		flex: 0.3;
+		border: solid #f8f8f8;
+		border-radius: 20px;
+		padding-top: 10px;
+		padding-bottom: 10px;
+		padding-left: 20px;
+		padding-right: 20px;
+		cursor: pointer;
+		color: black;
+		box-shadow: 0 0 0 1px var(--saf-0),0 1px 3px 0 rgba(0,0,0,.08);
+
+	}
+
+	.element-marked {
+		color: white;
+		background: #1264a3;
+	}
+
+	</style>
+</head>
+<body>
+	<div id="header-progressbar-wrapper">
+		<div id="inner-wrapper">
+			<div id="progressbar"></div>
+		</div>
+	</div>
+	<header>
+
+			<div id="" class="">
+				
+			</div>
+			<div id="" class="">
+					Data Explorer
+			</div>
+			<div id="progress" class="">
+					<div class="" id="progress_inner"></div>
+			</div>
+
+	</header>
+	<div id="datamerger-vue">
+		<div 
+			 v-cloak
+			 :style = "step > 0 && modalOpened == true ? 'display: flex' : 'display: none'"
+			 class  ="popup-modal-overlay"
+		>
+			<div class="popup-modal-full">
+				<div 
+					class = "popup-modal-header"
+					v-html= "'Step ' + step"
+				>	
+				</div>
+				<div class="popup-modal-body">
+					<div 
+						v-if = "step == 1"
+					>
+						Please pick join type: 
+						<select 
+							v-model="joinType"
+						>
+							<option value="left">Left join</option>
+							<option value="overlap">Overlap</option>
+							<option value="right">Right join</option>
+						</select>
+					</div>
+					<div 
+						v-else-if = "step == 2"
+					>
+						<div id="test_result">
+						</div>
+						<div 
+							class= "popup-range"
+							style= "display: flex;" 
+						>
+							<input
+								style   = "direction: rtl;"
+								type	= "range" 
+								id 		= "volume" 
+								name	= "volume"
+						        :min	= "threshold.minScore" 
+						        :max	= "threshold.maxScore"
+						       	v-model = "threshold.current"
+						    >
+						    <span v-text="threshold.current"></span>
+						</div>
+					</div>
+
+					<div class="popup-modal-actions">
+						<button 
+								id 		= "popup-modal-back" 
+								class 	= "button" 
+								:style  = "step > 1 ? 'visibility: visible' : 'visibility: hidden'"
+								@click  = "backButton"
+						>
+							&#xab;Back
+						</button>
+						<button 
+								id 		= "popup-modal-next" 
+								class 	= "button" 
+								:style  = "step < 4 ? 'visibility: visible' : 'visibility: hidden'"
+								@click  = "nextButton"
+						>
+							Next&#xbb;
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="main_content">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-12">
+					<div id="drop_zone" class="">
+						<i data-feather="file" id="" class="icon-lg" stroke-width="1"></i>
+						<center><h1>Drop a file here</h1></center>
+						<h2>I love CSV, JSON, XLSX files</h2>
+						
+					</div>
+				</div>
+				<div id="file_stats" class="">
+				</div>
+				<div id="column_stats" class="col-xs-12">
+				</div>
+			</div>
+			<div class="row">
+				<div id="sidebar" class="col-xs-12"></div>
+				<div id="result" class="col-xs-12"></div>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="node_modules/papaparse/papaparse.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.3.1/semantic.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/dataTables.semanticui.min.js"></script>
+
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.5.2/js/dataTables.buttons.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.semanticui.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.5.2/js/buttons.colVis.min.js"></script>
+	<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/colreorder/1.5.0/js/dataTables.colReorder.min.js"></script>
+	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/prism.min.js"></script>-->
+	<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+	<script>
+	  feather.replace({height: 50, width: 50,})
+	</script>
+	<script type="text/javascript" src="bundle.js"></script>
+	<script type="text/javascript" src="display/vue.js"></script>
+</body>
+</html>
