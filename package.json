@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prepare": "nvm use 9.4.0",
     "build": "browserify index.js > bundle.js",
     "watch": "watchify index.js -o bundle.js",
     "serve": "npm run watch & ws"
